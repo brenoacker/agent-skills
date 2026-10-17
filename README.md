@@ -14,9 +14,27 @@ Personal and open-source curated skills package for AI coding agents (**Antigrav
 
 ## Quick Installation
 
-### Windows (PowerShell)
+### 1. Via Universal CLI (`npx skills`) — Recommended
 
-Install for your agent of choice:
+The easiest way for anyone to install skills from this repository directly into their AI agent (Antigravity, Claude Code, Cursor, Codex, etc.) without cloning manually:
+
+```bash
+# Interactive skill and agent selection
+npx skills add brenoacker/agent-skills
+
+# Install all skills globally
+npx skills add brenoacker/agent-skills -g --all
+
+# List available skills without installing
+npx skills add brenoacker/agent-skills --list
+
+# Install a specific skill (e.g. tlc-spec-lean)
+npx skills add brenoacker/agent-skills --skill tlc-spec-lean
+```
+
+---
+
+### 2. Via Standalone Shell Scripts (No Node.js Required)
 
 ```powershell
 # Install into Antigravity (~/.gemini/antigravity/skills)

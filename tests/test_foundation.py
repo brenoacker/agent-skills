@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import tempfile
 import subprocess
@@ -7,13 +8,32 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+def run_installer(target, scope="global", dest=None):
+    if sys.platform == "win32":
+        cmd = [
+            "powershell", "-ExecutionPolicy", "Bypass", "-File",
+            str(REPO_ROOT / "scripts" / "install.ps1"),
+            "-Target", target,
+            "-Scope", scope
+        ]
+        if dest:
+            cmd.extend(["-DestinationOverride", dest])
+    else:
+        cmd = [
+            "bash", str(REPO_ROOT / "scripts" / "install.sh"),
+            "--target", target,
+            "--scope", scope
+        ]
+        if dest:
+            cmd.extend(["--dest", dest])
+    return subprocess.run(cmd, capture_output=True, text=True)
+
 class TestRepositoryFoundation(unittest.TestCase):
 
     def test_skills_directory_structure(self):
         """C1: skills directory exists and contains flat skill folders with SKILL.md."""
         skills_dir = REPO_ROOT / "skills"
         self.assertTrue(skills_dir.is_dir(), "skills directory must exist")
-        # Every entry inside skills/ must be a directory containing SKILL.md
         entries = [e for e in skills_dir.iterdir() if e.is_dir() and not e.name.startswith(".")]
         for entry in entries:
             skill_md = entry / "SKILL.md"
@@ -65,13 +85,7 @@ class TestRepositoryFoundation(unittest.TestCase):
     def test_install_target_antigravity(self):
         """C6: installer copies skills to Antigravity path when target is antigravity."""
         with tempfile.TemporaryDirectory() as tmp_dir:
-            cmd = [
-                "powershell", "-ExecutionPolicy", "Bypass", "-File",
-                str(REPO_ROOT / "scripts" / "install.ps1"),
-                "-Target", "antigravity",
-                "-DestinationOverride", tmp_dir
-            ]
-            res = subprocess.run(cmd, capture_output=True, text=True)
+            res = run_installer(target="antigravity", scope="test", dest=tmp_dir)
             self.assertEqual(res.returncode, 0, f"Installer failed: {res.stderr}")
             installed_skills = list(Path(tmp_dir).iterdir())
             self.assertTrue(len(installed_skills) >= 1, "At least one skill directory installed")
@@ -79,13 +93,7 @@ class TestRepositoryFoundation(unittest.TestCase):
     def test_install_target_claude(self):
         """C7: installer copies skills to Claude Code path when target is claude."""
         with tempfile.TemporaryDirectory() as tmp_dir:
-            cmd = [
-                "powershell", "-ExecutionPolicy", "Bypass", "-File",
-                str(REPO_ROOT / "scripts" / "install.ps1"),
-                "-Target", "claude",
-                "-DestinationOverride", tmp_dir
-            ]
-            res = subprocess.run(cmd, capture_output=True, text=True)
+            res = run_installer(target="claude", scope="test", dest=tmp_dir)
             self.assertEqual(res.returncode, 0, f"Installer failed: {res.stderr}")
             installed_skills = list(Path(tmp_dir).iterdir())
             self.assertTrue(len(installed_skills) >= 1, "At least one skill directory installed")
@@ -93,13 +101,7 @@ class TestRepositoryFoundation(unittest.TestCase):
     def test_install_target_codex(self):
         """C8: installer copies skills to Codex path when target is codex."""
         with tempfile.TemporaryDirectory() as tmp_dir:
-            cmd = [
-                "powershell", "-ExecutionPolicy", "Bypass", "-File",
-                str(REPO_ROOT / "scripts" / "install.ps1"),
-                "-Target", "codex",
-                "-DestinationOverride", tmp_dir
-            ]
-            res = subprocess.run(cmd, capture_output=True, text=True)
+            res = run_installer(target="codex", scope="test", dest=tmp_dir)
             self.assertEqual(res.returncode, 0, f"Installer failed: {res.stderr}")
             installed_skills = list(Path(tmp_dir).iterdir())
             self.assertTrue(len(installed_skills) >= 1, "At least one skill directory installed")
@@ -107,13 +109,7 @@ class TestRepositoryFoundation(unittest.TestCase):
     def test_install_target_all(self):
         """C9: installer copies skills to all targets when target is all."""
         with tempfile.TemporaryDirectory() as tmp_dir:
-            cmd = [
-                "powershell", "-ExecutionPolicy", "Bypass", "-File",
-                str(REPO_ROOT / "scripts" / "install.ps1"),
-                "-Target", "all",
-                "-DestinationOverride", tmp_dir
-            ]
-            res = subprocess.run(cmd, capture_output=True, text=True)
+            res = run_installer(target="all", scope="test", dest=tmp_dir)
             self.assertEqual(res.returncode, 0, f"Installer failed: {res.stderr}")
             for expected_sub in ("antigravity", "claude", "codex"):
                 target_path = Path(tmp_dir) / expected_sub
@@ -121,12 +117,7 @@ class TestRepositoryFoundation(unittest.TestCase):
 
     def test_install_invalid_target_fails(self):
         """C10: installer exits with code 1 when target is invalid."""
-        cmd = [
-            "powershell", "-ExecutionPolicy", "Bypass", "-File",
-            str(REPO_ROOT / "scripts" / "install.ps1"),
-            "-Target", "unsupported_agent_xyz"
-        ]
-        res = subprocess.run(cmd, capture_output=True, text=True)
+        res = run_installer(target="unsupported_agent_xyz")
         self.assertEqual(res.returncode, 1, "Installer must fail with code 1 for invalid target")
 
     def test_validate_script_passes_valid_skills(self):

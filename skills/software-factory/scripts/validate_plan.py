@@ -379,6 +379,12 @@ def check_file(path):
                 errors.append(f"assumption '{assumption[:40]}' has empty 'Chosen default'")
             if not rationale or PLACEHOLDER_RE.match(rationale):
                 errors.append(f"assumption '{assumption[:40]}' has empty 'Rationale'")
+            confirmed = cells[3].strip() if len(cells) > 3 else ""
+            if not confirmed or PLACEHOLDER_RE.match(confirmed) or not confirmed.lower().startswith("y"):
+                errors.append(
+                    f"assumption '{assumption[:40]}' is unconfirmed ('{confirmed}') - close all "
+                    "scope doubts in DISCOVER before approving plan.md"
+                )
         if template_seen:
             warnings.append("Assumptions table still contains template placeholder rows")
         oq = [lines[i] for i in range(*b) if "open questions" in lines[i].lower()]

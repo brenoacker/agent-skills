@@ -20,20 +20,29 @@
   },
   "skills": [
     {
-      "name": "tlc-spec-lean",
-      "description": "Spec-driven feature work that freezes obligations instead of the plan: one human-reviewed plan with EARS criteria, path, entities, interface and one-way doors, then proof-backed checks, then build, then an independent Verifier.",
+      "name": "software-factory",
+      "description": "End-to-end multi-agent Software Factory (DISCOVER -> PLAN -> CHECKS -> BUILD -> VERIFY) with a Thin-Orchestrator subagent-per-phase architecture across Antigravity, Claude Code, and Codex.",
       "category": "development",
-      "type": "curated",
-      "author": "Tech Leads Club - github.com/tech-leads-club",
-      "version": "1.1.0",
-      "path": "skills/tlc-spec-lean",
+      "type": "personal",
+      "author": "brenoacker",
+      "version": "2.0.0",
+      "path": "skills/software-factory",
       "files": [
         "SKILL.md",
+        "references/discovery.md",
         "references/plan.md",
         "references/checks.md",
         "references/build.md",
         "references/verify.md",
-        "references/memory.md"
+        "references/orchestration.md",
+        "references/memory.md",
+        "scripts/orchestrate.py",
+        "scripts/validate_plan.py",
+        "scripts/validate_checks.py",
+        "scripts/validate_verification.py",
+        "scripts/check_commit.py",
+        "scripts/lessons.py",
+        "scripts/selftest.py"
       ]
     }
   ]

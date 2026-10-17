@@ -41,7 +41,12 @@ Coding agents fail on complex features for two predictable reasons:
 The pinned set. These hold at every profile:
 
 1. **Zero unconfirmed assumptions (`Confirmed? y`).** Never guess product or scope behavior silently. Every gray area surfaced during `DISCOVER` must be asked with concrete options and a recommended default, or explicitly delegated by the user (`Confirmed? y`). `validate_plan.py` rejects any row where `Confirmed?` is `n` or blank.
-2. **Thin Orchestrator isolation.** Keep the main chat under ~15k tokens. Delegate repo exploration (`scout`), plan drafting (`planner`), check derivation (`specifier`), coding (`builder`), auditing (`verifier`), and gap repair (`fixer`) to fresh subagents via native agent tools (`invoke_subagent` in Antigravity, `Task` in Claude Code) or `scripts/orchestrate.py`.
+2. **Thin Orchestrator & Strict 1-Subagent-Per-Phase Boundary (`scout` != `planner` != `specifier` != `builder` != `verifier`).** Keep the main chat under ~15k tokens. Never merge two phases into a single subagent call:
+   - `scout` ONLY explores and returns the ~30-line ambiguity brief.
+   - `planner` ONLY writes `plan.md` + runs `validate_plan.py`, then **stops and exits**.
+   - `specifier` ONLY writes `checks.md` + runs `validate_checks.py`, then **stops and exits** (it MUST NEVER write test files or implementation code or continue into `BUILD`).
+   - `builder` ONLY runs after `specifier` has returned. For multi-slice features (`S1`, `S2`, ...), dispatch **one separate `builder` subagent per slice sequentially** so each slice executes in a fresh context window and reports progress to the user.
+   - `verifier` ONLY runs in a fresh subagent after the final `builder` commits.
 3. **Every check is one observable claim with a concrete value plus the proof** — the exact test selector or command whose exit code settles it. No proof, no check.
 4. **Tests assert what the checks say, never what the code happens to do.** Never write a test by reading the implementation.
 5. **Never weaken an assertion, delete a test, or skip one to make a suite pass.** A genuinely wrong check is a stop-and-ask, not an edit.
@@ -85,7 +90,7 @@ budget: 150k
 
 Create each file when its phase produces content. For a change under roughly three files with no one-way door and zero scope ambiguity, write only `checks.md` with an `## Intent` paragraph and skip `plan.md`.
 
-## Fivebounded design sections in `plan.md`
+## Five bounded design sections in `plan.md`
 
 | Section | Reviews | Kept out |
 | --- | --- | --- |
@@ -99,8 +104,8 @@ Create each file when its phase produces content. For a change under roughly thr
 
 - **Discover** — Dispatch the read-only `scout` subagent to inspect the repo, `.specs/STATE.md`, and `.specs/LESSONS.md` and return a ~30-line ambiguity brief. Walk the user through genuine product and scope gray areas (at most 2 questions per turn, concrete options with recommended default) across `Observable` surfaces and the 9 implicit dimensions until 0 doubts remain: [discovery.md](./references/discovery.md).
 - **Plan** — Dispatch the `planner` subagent with the confirmed discovery decisions to write `.specs/features/<feature>/plan.md` and pass `validate_plan.py`. Present `plan.md` to the user for quick sign-off: [plan.md](./references/plan.md).
-- **Checks** — Once `plan.md` is approved, run autonomously. Dispatch the `specifier` subagent to derive `.specs/features/<feature>/checks.md` (claims + proofs, `Coverage` join, `Swept`, and `## Handoff` batch sizing) and pass `validate_checks.py`: [checks.md](./references/checks.md).
-- **Build** — Dispatch one `builder` subagent per batch/slice sequentially. Each builder writes tests from the checks, implements, runs proofs, records `Boundary` in `checks.md`, and commits with `check_commit.py`: [build.md](./references/build.md).
+- **Checks** — Once `plan.md` is approved, run autonomously. Dispatch a dedicated `specifier` subagent to derive `.specs/features/<feature>/checks.md` (claims + proofs, `Coverage` join, `Swept`, and `## Handoff` batch sizing) and pass `validate_checks.py`, then **terminate that subagent before any code or tests are written**: [checks.md](./references/checks.md).
+- **Build** — After `specifier` finishes, dispatch **one fresh `builder` subagent per slice (`S1`, `S2`, ...) sequentially**. Each builder writes tests from the checks for its assigned slice, implements, runs proofs, records `Boundary` in `checks.md`, commits with `check_commit.py`, and exits: [build.md](./references/build.md).
 - **Verify & Fix** — Dispatch a fresh `verifier` subagent over `<feature base>..HEAD` to write `verification.md` and run `validate_verification.py`. If FAIL, dispatch a `fixer` subagent and re-verify (up to 3 rounds): [verify.md](./references/verify.md).
 - **Orchestration & Subagent Dispatch** — Thin-Orchestrator rules, context-window budgets, and multi-agent mappings (`antigravity`, `claude`, `codex`): [orchestration.md](./references/orchestration.md).
 - **Durable Memory** — Project decisions (`STATE.md`), session handoff, and verification-grounded lessons (`lessons.py`): [memory.md](./references/memory.md).
@@ -124,9 +129,9 @@ Resolve `<skill-dir>` as the directory containing this `SKILL.md` and invoke `py
 
 ## Subagents and handoff
 
-Every phase is isolated in its own subagent context (`scout`, `planner`, `specifier`, `builder`, `verifier`, `fixer`). During `BUILD`, pack whole slices into batches under the declared `budget` (default 150k tokens) or dispatch one `builder` per slice (`S1`, `S2`, ...) so each builder starts with a clean context window and reads only `plan.md`, `checks.md`, and the git diff of prior batches.
+Every phase is strictly isolated in its own subagent invocation (`scout` -> `planner` -> `specifier` -> `builder [S1]` -> `builder [S2]` -> ... -> `verifier` -> `fixer`). Never combine `specifier` (`CHECKS`) and `builder` (`BUILD`) in the same subagent. During `BUILD`, when a feature has multiple slices (`S1`, `S2`, ...), dispatch **one separate `builder` subagent per slice sequentially** so each builder starts with a clean context window, finishes quickly, commits its slice on green, and returns a progress update to the Thin Orchestrator.
 
-When the final builder batch returns green, the Orchestrator immediately dispatches the independent `verifier` subagent in the same turn without asking the user.
+When the final builder slice returns green, the Orchestrator immediately dispatches the independent `verifier` subagent in the same turn without asking the user.
 
 ## Knowledge chain
 

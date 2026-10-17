@@ -506,16 +506,12 @@ across several routes.
 - <ticket or binding design> - <what it settles>
 `````
 
-## Then confirm, and only then write checks
+## Then STOP, confirm with the user, and dispatch a separate `specifier` subagent
 
-**This is the one place worth stopping for a human by default.** Present the plan and stop.
-Point at `Flow`, at `Impact`, and at any `Landing` door that still has a live alternative -
-those are the three a reviewer would want named, not buried. Where `Relations` changes data
-that already exists or `Surface` changes something already consumed, say that too.
-
-Then continue into [checks.md](checks.md). Every route's statuses, every door, and every entity
-here owes a set row or a check there - that derivation is the next step's job, and it is the one
-that catches what this file left implicit.
+**Hard subagent boundary (`planner` != `specifier` != `builder`):**
+1. If you are the **`planner` subagent**: once `plan.md` is written and `validate_plan.py` exits `0`, **STOP immediately and return to the Thin Orchestrator**. Do NOT write `checks.md` or any code.
+2. In the **Thin Orchestrator (main chat)**: present `plan.md` to the user and stop for their quick sign-off. Point at `Flow`, at `Impact`, and at any `Landing` door.
+3. Once the user approves `plan.md`, the Thin Orchestrator dispatches a **fresh `specifier` subagent** ([checks.md](checks.md)) to derive `checks.md`, and ONLY after `specifier` finishes and exits does the Thin Orchestrator dispatch a **separate `builder` subagent** ([build.md](build.md)). Never combine `CHECKS` and `BUILD` in the same subagent.
 
 ## Notes
 

@@ -136,15 +136,15 @@ def build_isolated_prompt(feature, role, root, batch=None, base_sha=None, reques
             f"2. Write `{plan_ref}` with all required sections (`Problem`, `Flow`, `Impact`, `Relations`, `Surface`, `Landing`, `Criteria`, `Out of scope`, `Assumptions`, `Observable`, `Sources`).",
             "3. Ensure every row in `## Assumptions` has `Confirmed?` set to `y` (zero unconfirmed assumptions).",
             f"4. Run `python skills/software-factory/scripts/validate_plan.py {feature} --root .` and fix any errors until it exits 0.",
-            "5. Stop after `validate_plan.py` exits 0 and report the summary to the Thin Orchestrator.",
+            f"5. HARD STOP (`planner != specifier`): Do NOT write `{checks_ref}` or any code. Stop immediately after `validate_plan.py` exits 0 and report the summary to the Thin Orchestrator.",
         ]
     elif role == "specifier":
         body = [
             "## Mission (CHECKS — Obligation & Proof Specifier)",
             f"1. Read `{plan_ref}` and `skills/software-factory/references/checks.md`.",
-            f"2. Derive `{checks_ref}` from `{plan_ref}`: numbered checks (`C1..CN`) with concrete claims and exact `Proof:` test selectors, the `## Coverage` join table, `## Swept` (all 9 dimensions), and `## Handoff` batch sizing.",
+            f"2. Derive `{checks_ref}` from `{plan_ref}`: numbered checks (`C1..CN`) with concrete claims and exact `Proof:` test selectors, the `## Coverage` join table, `## Swept` (all 9 dimensions), and `## Handoff` per-slice batch sizing.",
             f"3. Run `python skills/software-factory/scripts/validate_checks.py {feature} --root .` and fix any errors until it exits 0.",
-            "4. Stop after `validate_checks.py` exits 0 and report the check count and batch plan to the Thin Orchestrator.",
+            "4. HARD STOP (`specifier != builder`): Do NOT write any test files or implementation code, and do NOT continue into `build.md`. Stop immediately after `validate_checks.py` exits 0 so the Thin Orchestrator can spawn a separate `builder` subagent per slice.",
         ]
     elif role == "builder":
         batch_label = batch or "all assigned slices"
@@ -155,7 +155,7 @@ def build_isolated_prompt(feature, role, root, batch=None, base_sha=None, reques
             f"3. For `{batch_label}`: write tests strictly from the claims and proofs in `{checks_ref}` (never from the implementation), implement the code, and run every proof command until exit 0.",
             f"4. Append `- **Boundary:** <checks> closed at <sha>` under `## Handoff` in `{checks_ref}`.",
             "5. Validate commit messages with `python skills/software-factory/scripts/check_commit.py --message \"<msg>\"` and commit your changes (no Co-Authored-By trailers).",
-            f"6. Do NOT create `{verif_ref}` and do NOT launch the Verifier. Report closed checks and commit hashes back to the Thin Orchestrator.",
+            f"6. HARD STOP (`builder != verifier`): Do NOT create `{verif_ref}` and do NOT launch the Verifier. Stop and report closed checks and commit hashes back to the Thin Orchestrator.",
         ]
     elif role == "verifier":
         body = [

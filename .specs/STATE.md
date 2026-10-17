@@ -12,9 +12,9 @@
 ## Handoff
 
 **Feature**: software-factory
-**Where**: C1-C12 built, awaiting independent Verifier
+**Where**: done (C1-C12 verified PASS in `.specs/features/software-factory/verification.md`)
 **In progress**: none
-**Next step**: Dispatch independent Verifier over `software-factory` to produce `.specs/features/software-factory/verification.md`
+**Next step**: none
 **Blockers**: none
 **Uncommitted**: none
 **Branch**: main

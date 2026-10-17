@@ -1,0 +1,10 @@
+{
+  "name": "agent-skills",
+  "description": "Personal and open-source curated skills package for AI coding agents.",
+  "version": "1.0.0",
+  "suggestedPrompts": [
+    "List all available personal and curated agent skills",
+    "Show instructions for using tlc-spec-lean",
+    "Install agent skills into my local workspace"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "categories": {
+    "development": {
+      "name": "Development",
+      "description": "Skills for software development, workflows, and implementation"
+    },
+    "quality": {
+      "name": "Quality & Verification",
+      "description": "Skills for testing, code review, verification, and audit"
+    },
+    "architecture": {
+      "name": "Architecture & Design",
+      "description": "Skills for system design, ADRs, RFCs, and patterns"
+    },
+    "productivity": {
+      "name": "Productivity & Tooling",
+      "description": "Skills for developer productivity and tooling workflows"
+    }
+  },
+  "skills": [
+    {
+      "name": "tlc-spec-lean",
+      "description": "Spec-driven feature work that freezes obligations instead of the plan: one human-reviewed plan with EARS criteria, path, entities, interface and one-way doors, then proof-backed checks, then build, then an independent Verifier.",
+      "category": "development",
+      "type": "curated",
+      "author": "Tech Leads Club - github.com/tech-leads-club",
+      "version": "1.1.0",
+      "path": "skills/tlc-spec-lean",
+      "files": [
+        "SKILL.md",
+        "references/plan.md",
+        "references/checks.md",
+        "references/build.md",
+        "references/verify.md",
+        "references/memory.md"
+      ]
+    }
+  ]
+}

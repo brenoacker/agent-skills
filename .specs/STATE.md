@@ -10,9 +10,9 @@
 ## Handoff
 
 **Feature**: repository-foundation
-**Where**: planning
-**In progress**: `.specs/features/repository-foundation/plan.md`
-**Next step**: Present validated plan to user for review
+**Where**: done
+**In progress**: none
+**Next step**: Add new personal or curated skills, or push changes to remote
 **Blockers**: none
-**Uncommitted**: `.specs/STATE.md`
+**Uncommitted**: none
 **Branch**: main

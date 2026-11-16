@@ -8,18 +8,11 @@ for the model to obey, you are rebuilding the thing this skill removed.
 
 ## Before the first line of code
 
-The checks exist; the size is now visible. Write `## Handoff` with the arithmetic. Then:
+**Hard subagent boundary (`specifier` != `builder`):**
+- `checks.md` MUST already exist and pass `validate_checks.py` (written by a separate `specifier` subagent) before any `builder` subagent is launched. Never write `checks.md` and run `BUILD` inside the same subagent.
+- For multi-slice features (`S1`, `S2`, ...), the Thin Orchestrator dispatches **one fresh `builder` subagent per slice sequentially** (passing `--batch S1`, then `--batch S2`, etc.) so each builder runs with a clean context window and reports progress back to the user after each slice commits on green.
+- For a single small slice under the budget, the Thin Orchestrator dispatches one `builder` subagent for that slice.
 
-- The estimate fits the budget → one builder. Do not ask. Do not offer a spawn.
-- The estimate exceeds it → **stop**. Ask which mechanism, with both exits named:
-  **handoff** (cut at the surface boundary already written, batches sequential and only on
-  green) or **one builder** (stay, and accept compaction / context loss). Record the choice
-  on that same section before any test or implementation lands.
-
-Do not ask where to cut. Do not ask when it fits. Do not offer spawn at the start of a
-feature. The cut is logistics; only the mechanism, and only when over the limit, is a user
-decision. A slice that alone exceeds the budget was cut too coarsely - say so rather than
-splitting mid-outcome. That is not this ask.
 
 ## What is fixed and what is not
 
@@ -158,18 +151,15 @@ If the user chose one builder over a budget miss, compaction is the accepted pat
 continuing. You cannot see the limit approaching, but you can see that a compaction occurred
 - so build the recovery on the signal that exists.
 
-## Then stop
+## Then stop and return to the Thin Orchestrator
 
-When the last check of **your batch** is committed, report and stop: checks closed, commit
-hashes, proof results, deviations. Do not dispatch the Verifier - that is the orchestrator's
-step, after the last batch of the whole feature, over the full check set. A Verifier briefed by
-the builder that just closed the final batch inherits that builder's scope even though it
-inherits none of its tokens, and reports a pass over four checks that reads exactly like a pass
-over forty.
+When the last check of **your assigned slice/batch** is committed, report and stop immediately:
+checks closed, commit hashes, proof results, deviations.
 
-If you hold the whole feature - you wrote every check's commit, or the last batch just returned
-green to you - you are the orchestrator. Dispatch the Verifier in that same turn. Do not ask.
-Do not wait for "verify work". See [verify.md](verify.md).
+- **Never write `verification.md` inside a `builder` subagent.**
+- **Never dispatch the `verifier` subagent from inside a `builder` subagent.**
+- Return control to the **Thin Orchestrator (main chat)**. If more slices remain, the Thin Orchestrator dispatches the next `builder` subagent; when all slices of the feature are committed, the Thin Orchestrator dispatches the fresh, independent `verifier` subagent over `<feature base>..HEAD` in that same turn without asking the user. See [verify.md](verify.md) and [orchestration.md](orchestration.md).
+
 
 ## What was deliberately removed
 

@@ -211,19 +211,14 @@ Where each unwritten requirement landed. All nine, one line each, every time.
 
 ## Handoff
 
-Size, with the arithmetic, written after the checks exist and before any code. The cut is
-yours; the mechanism is not, once the estimate exceeds the budget.
+Size, with the arithmetic, written after the checks exist and before any code.
 
-Under the budget — one builder, no ask:
+- When the feature has multiple slices (`S1`, `S2`, ...), prefer dispatching **one `builder` subagent per slice sequentially** so each builder starts with a fresh context window and reports progress per slice to the Thin Orchestrator:
+  - `S1 = 10k (Billing); S2 = 15k (Webhooks) -> 25k total, 1 builder subagent per slice (S1 then S2)`
+- For a single small slice under the budget:
+  - `S1 = 10k -> 10k total, under the 150k budget - one builder subagent`
 
-- S1 = 10k, all in Billing; S2 enters Webhooks at 25k total, under the 150k budget - one builder
-
-Over the budget — stop, ask (handoff vs one builder), then record the choice:
-
-- S1-S3 = 118k, all in Billing; S4 enters Webhooks at 190k -> proposed cut after S3
-- Mechanism: handoff | one builder (compaction accepted) — <the user's choice>
-
-<Appended by each builder as it finishes, three lines each:>
+<Appended by each builder subagent as it finishes its slice/batch, three lines each:>
 
 - **Boundary:** C1-C7 closed at `<sha>`
 - **Settled mid-build:** <every clarification the user gave that did not become a Landing row or an edited check>
@@ -245,17 +240,15 @@ dimension, a swept landing left blank, and a missing `Profile:` line. It warns o
 names no test selector, on a claim carrying a vague word, and - the derivation check - on a route
 the plan's `Surface` names that nothing here mentions.
 
-A non-zero exit means fix before writing code. The script checks structure; the judgment - is the
-proof the right one, does the level match the claim - stays yours.
+A non-zero exit means fix `checks.md` before any builder starts. The script checks structure; the
+judgment - is the proof the right one, does the level match the claim - stays yours.
 
-## Then keep going
+## Then STOP and return to the Thin Orchestrator
 
-Write the artifact and continue into [build.md](build.md). Waiting for approval by default buys
-nothing when the plan was already confirmed and the checks derive from it. Stop only for: scope
-the sweep raised that would grow the work, a derivation that contradicts the approved plan -
-which sends you back to that file, not around it - anything the writability gate caught that
-asking did not resolve, and writing test-policy rows into the repo's guidelines.
+**Hard subagent boundary (`specifier` != `builder`):**
+Once `checks.md` is written and `validate_checks.py` exits `0`, **STOP immediately and return your summary to the Thin Orchestrator**.
 
-What keeps this reviewable is the ordering, not a commit: the artifact is complete before you
-touch code, so it reads as what you were building toward rather than a rationalisation of what
-you built.
+- **NEVER continue into [build.md](build.md) inside the `specifier` subagent.**
+- **NEVER write test files or implementation code in the `specifier` subagent.**
+- The Thin Orchestrator must receive the `specifier` completion first and then spawn a **separate, fresh `builder` subagent** (one per slice/batch) for the `BUILD` phase. See [orchestration.md](orchestration.md).
+

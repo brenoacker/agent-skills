@@ -110,5 +110,5 @@ Replay of a delivery is a no-op; a payload without a subscription id is rejected
 
 ## Sources
 
-- TLC-412 - the suspension rule and the 11-day evidence
+- BILL-412 - the suspension rule and the 11-day evidence
 - provider webhook reference - the 9 statuses and the 5 event types

@@ -28,8 +28,8 @@ npx skills add brenoacker/agent-skills -g --all
 # List available skills without installing
 npx skills add brenoacker/agent-skills --list
 
-# Install a specific skill (e.g. tlc-spec-lean)
-npx skills add brenoacker/agent-skills --skill tlc-spec-lean
+# Install a specific skill (e.g. software-factory)
+npx skills add brenoacker/agent-skills --skill software-factory
 ```
 
 ---
@@ -88,7 +88,7 @@ agent-skills/
 ├── plugin.json                 # Antigravity plugin manifest
 ├── registry.json               # Indexed catalog of all skills with metadata
 ├── skills/                     # Flat directory of all installed skills
-│   └── tlc-spec-lean/          # Spec-driven development skill
+│   └── software-factory/       # End-to-end multi-agent Software Factory skill
 │       ├── SKILL.md
 │       ├── references/
 │       └── scripts/
@@ -100,7 +100,8 @@ agent-skills/
 │   ├── install.sh              # Bash installer
 │   └── validate.py             # Validation gate linter
 ├── tests/
-│   └── test_foundation.py      # Automated foundation test suite
+│   ├── test_foundation.py      # Automated foundation test suite
+│   └── test_software_factory.py # Software Factory test suite
 └── README.md
 ```
 

@@ -136,6 +136,11 @@ CASES = [
     ("validate_plan", "plan.md", "assumption with no rationale",
      lambda s: s.replace("| the provider already retried 3 times before it reports a failure |", "|  |"),
      1, "empty 'Rationale'"),
+    ("validate_plan", "plan.md", "assumption left unconfirmed (Confirmed? n)",
+     lambda s: s.replace(
+         "| the provider already retried 3 times before it reports a failure | y |",
+         "| the provider already retried 3 times before it reports a failure | n |"),
+     1, "unconfirmed"),
     ("validate_plan", "plan.md", "missing required section",
      lambda s: s.replace("## Assumptions", "## Open Decisions"),
      1, "missing required section: ## Assumptions"),
@@ -208,7 +213,7 @@ NEGATIVE_CONTROLS = [
 
 
 def scaffold():
-    root = tempfile.mkdtemp(prefix="tlc-spec-lean-selftest-")
+    root = tempfile.mkdtemp(prefix="software-factory-selftest-")
     fdir = os.path.join(root, ".specs", "features", FEATURE)
     os.makedirs(fdir)
     for name in ("plan.md", "checks.md", "verification.md"):
@@ -313,6 +318,49 @@ def run_tooling():
                 print("  ok      lessons.py: init - add - status round-trip writes both artifacts")
     finally:
         shutil.rmtree(root, ignore_errors=True)
+
+    # orchestrate.py: status, prompt (all 6 roles), gate (all 3 phases), and dispatch --dry-run (all 3 agents)
+    orch_root = scaffold()
+    try:
+        code, out = run_script("orchestrate.py", "status", FEATURE, "--root", orch_root)
+        if code == 0 and "phase: done" in out.lower():
+            print("  ok      orchestrate.py: status reports done on complete fixture")
+        else:
+            ok = False
+            print(f"  BROKEN  orchestrate.py status: exit={code} out={out.strip()}")
+
+        for role in ("scout", "planner", "specifier", "builder", "verifier", "fixer"):
+            code, out = run_script("orchestrate.py", "prompt", FEATURE, "--role", role, "--root", orch_root)
+            if code != 0 or role.lower() not in out.lower():
+                ok = False
+                print(f"  BROKEN  orchestrate.py prompt --role {role}: exit={code}")
+                break
+        else:
+            print("  ok      orchestrate.py: prompt generates isolated brief for all 6 roles")
+
+        for phase in ("plan", "checks", "verify"):
+            code, out = run_script("orchestrate.py", "gate", FEATURE, "--phase", phase, "--root", orch_root)
+            if code != 0:
+                ok = False
+                print(f"  BROKEN  orchestrate.py gate --phase {phase}: exit={code}")
+                break
+        else:
+            print("  ok      orchestrate.py: gate passes plan, checks, and verify on clean fixture")
+
+        for agent in ("antigravity", "claude", "codex"):
+            code, out = run_script(
+                "orchestrate.py", "dispatch", FEATURE, "--role", "builder",
+                "--agent", agent, "--dry-run", "--root", orch_root
+            )
+            if code != 0 or agent not in out.lower():
+                ok = False
+                print(f"  BROKEN  orchestrate.py dispatch --agent {agent}: exit={code}")
+                break
+        else:
+            print("  ok      orchestrate.py: dispatch --dry-run formats antigravity, claude, and codex")
+    finally:
+        shutil.rmtree(orch_root, ignore_errors=True)
+
     return ok
 
 

@@ -42,7 +42,7 @@ features:
       stdout_contains:
         - "Skills installation completed successfully."
       expected_paths:
-        - "tlc-spec-lean/SKILL.md"
+        - "software-factory/SKILL.md"
         - "high-confidence-codebase/SKILL.md"
 
   install-all-agents:

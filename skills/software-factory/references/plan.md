@@ -108,11 +108,7 @@ badly shaped question spends a turn and buys less than a stated default would ha
   is product capabilities only - process and harness rules live in AGENTS.md or as
   Observable `n/a`.
 
-Anything asked and not answered, or that you chose not to raise, lands in `## Assumptions` with
-your chosen default and rationale and `Confirmed? n`. That column is the whole record of who
-decided what: `y` means a human said so. Never mark `y` for a default nobody saw. Once a default
-is a numbered criterion, drop the assumption row - the table is leftovers, not a second copy of
-the criteria.
+All product and scope gray areas are resolved with the user during [discovery.md](discovery.md) before `plan.md` is finalized. Every decision that is not already a numbered criterion lands in `## Assumptions` with the confirmed default, rationale, and `Confirmed? y`. `validate_plan.py` rejects any row where `Confirmed?` is `n` or blank — never guess silently when a question belongs to the user. Once a default is a numbered criterion, drop the assumption row — the table is for non-criterion assumptions and delegated defaults, not a second copy of the criteria.
 
 ## Walk the surfaces
 
@@ -332,10 +328,7 @@ Before presenting the plan, five checks. Nothing proceeds unresolved **and** unm
 1. **Unambiguity and precision.** Every criterion has a single interpretation and a precise
    expected outcome. One that fails either gets resolved with the user, split, or logged as an
    assumption with the chosen interpretation and its rationale.
-2. **Assumptions closure.** Every unresolved decision that surfaced is either resolved or
-   recorded in `## Assumptions` with a chosen default and a rationale - including every gray area
-   you chose not to raise and every one the user declined. Silently dropped is the failure this
-   check exists for; a default nobody saw is fine, a default nobody can find is not.
+2. **Assumptions closure (`Confirmed? y`).** Every decision that surfaced during Discovery is either a numbered criterion or recorded in `## Assumptions` with a chosen default, a rationale, and `Confirmed?` set to `y`. Silently dropped or unconfirmed (`Confirmed? n`) assumptions fail the closure gate.
 3. **Blocking questions are marked as such.** A question that stops a criterion from ever being
    satisfiable is different in kind from one that leaves an error payload undecided. So is one
    that blocks nothing technical and still stops the feature reaching real users - a catalog
@@ -359,7 +352,7 @@ python3 <skill-dir>/scripts/validate_plan.py <feature>
 ```
 
 It fails a missing or empty section, a criterion that is not EARS-shaped, an assumption row with
-an empty default or rationale, an `Observable` row whose landing is blank or whose `n/a` carries
+an empty default, empty rationale, or unconfirmed status (`Confirmed?` not `y`), an `Observable` row whose landing is blank or whose `n/a` carries
 no reason, a `Landing` row with no literal shape or no rejected alternative, a `Relations` block
 that names columns or types, a `Surface` row missing its statuses, and check numbers written
 into `Surface` before checks exist. It warns on a `Flow` hop naming a module marked neither as
@@ -481,7 +474,7 @@ Defaults that are not already a numbered criterion. Drop a row once it is.
 
 | Assumption | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| <ambiguity> | <what we will do> | <why> | y/n |
+| <ambiguity> | <what we will do> | <why> | y |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -513,16 +506,12 @@ across several routes.
 - <ticket or binding design> - <what it settles>
 `````
 
-## Then confirm, and only then write checks
+## Then STOP, confirm with the user, and dispatch a separate `specifier` subagent
 
-**This is the one place worth stopping for a human by default.** Present the plan and stop.
-Point at `Flow`, at `Impact`, and at any `Landing` door that still has a live alternative -
-those are the three a reviewer would want named, not buried. Where `Relations` changes data
-that already exists or `Surface` changes something already consumed, say that too.
-
-Then continue into [checks.md](checks.md). Every route's statuses, every door, and every entity
-here owes a set row or a check there - that derivation is the next step's job, and it is the one
-that catches what this file left implicit.
+**Hard subagent boundary (`planner` != `specifier` != `builder`):**
+1. If you are the **`planner` subagent**: once `plan.md` is written and `validate_plan.py` exits `0`, **STOP immediately and return to the Thin Orchestrator**. Do NOT write `checks.md` or any code.
+2. In the **Thin Orchestrator (main chat)**: present `plan.md` to the user and stop for their quick sign-off. Point at `Flow`, at `Impact`, and at any `Landing` door.
+3. Once the user approves `plan.md`, the Thin Orchestrator dispatches a **fresh `specifier` subagent** ([checks.md](checks.md)) to derive `checks.md`, and ONLY after `specifier` finishes and exits does the Thin Orchestrator dispatch a **separate `builder` subagent** ([build.md](build.md)). Never combine `CHECKS` and `BUILD` in the same subagent.
 
 ## Notes
 

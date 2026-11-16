@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "suggestedPrompts": [
     "List all available personal and curated agent skills",
-    "Show instructions for using tlc-spec-lean",
+    "Show instructions for using software-factory",
     "Install agent skills into my local workspace"
   ]
 }

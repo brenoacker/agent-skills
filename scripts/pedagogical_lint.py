@@ -46,7 +46,11 @@ def _collect_python_files(targets: list[Path]) -> list[Path]:
             files.append(target)
         elif target.is_dir():
             for candidate in sorted(target.rglob("*.py")):
-                if "__pycache__" not in candidate.parts and "tlc-spec-lean" not in candidate.parts:
+                if (
+                    "__pycache__" not in candidate.parts
+                    and "skills" not in candidate.parts
+                    and "software-factory" not in candidate.parts
+                ):
                     files.append(candidate)
     return files
 

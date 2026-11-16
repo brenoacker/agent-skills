@@ -261,7 +261,7 @@ def _check_feature(fdir, name):
                         f"- the rows priced work the checks do not name"
                     )
 
-    # Fault injection is profile-scoped (standard, ui), like tlc-implement. Under `light` a
+    # Fault injection is profile-scoped (standard, ui). Under `light` a
     # report with no fault rows is correct, and the profile line is what says so.
     if effective in ("standard", "ui") and not saw_faults:
         errors.append(

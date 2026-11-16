@@ -35,6 +35,21 @@
         "references/verify.md",
         "references/memory.md"
       ]
+    },
+    {
+      "name": "high-confidence-codebase",
+      "description": "Transforms a repository into a high-confidence deterministic engineering environment (Potato Pyramid methodology) with baseline diagnostics, pedagogical LLM linters, architectural boundary enforcement, and runtime verification.",
+      "category": "quality",
+      "type": "personal",
+      "author": "Breno Acker",
+      "version": "1.0.0",
+      "path": "skills/high-confidence-codebase",
+      "files": [
+        "SKILL.md",
+        "references/01-AGENT-STATIC-AND-LINTS.md",
+        "references/02-AGENT-ARCHITECTURE-BOUNDARIES.md",
+        "references/03-AGENT-RUNTIME-VERIFICATION.md"
+      ]
     }
   ]
 }

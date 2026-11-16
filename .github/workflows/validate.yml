@@ -18,10 +18,39 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install deterministic verification dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install mypy ruff hypothesis pyyaml types-PyYAML
+
+      - name: Block unsolicited Markdown files
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          bash scripts/check-no-unsolicited-md.sh
+
+      - name: Run strict typecheck
+        run: |
+          python -m mypy scripts tests
+
+      - name: Run pedagogical linter and Ruff
+        run: |
+          python scripts/pedagogical_lint.py
+          python -m ruff check scripts tests
+
+      - name: Run architectural dependency boundary check
+        run: |
+          python scripts/check_deps.py --root .
+
       - name: Run skill validation linter
         run: |
           python scripts/validate.py --root .
 
-      - name: Run foundation tests
+      - name: Run foundation and property-based tests
         run: |
           python -m unittest discover -s tests
+          python -m unittest discover -s tests/properties
+
+      - name: Run runtime feature verification CLI
+        run: |
+          python -m scripts.verify_feature --all

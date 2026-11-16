@@ -1,0 +1,34 @@
+[project]
+name = "agent-skills"
+version = "1.0.0"
+description = "Personal and open-source curated skills package for AI coding agents."
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "hypothesis>=6.0",
+    "mypy>=1.10",
+    "ruff>=0.4",
+    "types-PyYAML>=6.0",
+]
+
+[tool.mypy]
+strict = true
+disallow_untyped_defs = true
+files = ["scripts", "tests"]
+exclude = ["skills/tlc-spec-lean/"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["skills/tlc-spec-lean"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"requests".msg = "AGENTE: Não use chamadas bloqueantes ('requests', 'time.sleep'). Utilize o cliente HTTP assíncrono do projeto e 'await asyncio.sleep()'."
+"time.sleep".msg = "AGENTE: Não use chamadas bloqueantes ('requests', 'time.sleep'). Utilize o cliente HTTP assíncrono do projeto e 'await asyncio.sleep()'."

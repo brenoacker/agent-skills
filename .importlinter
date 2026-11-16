@@ -1,0 +1,22 @@
+[importlinter]
+root_package = scripts
+
+[importlinter:contract:domain_purity]
+name = Domain layer must not import infrastructure or CLI layers
+type = forbidden
+source_modules =
+    scripts.domain
+forbidden_modules =
+    scripts.infrastructure
+    scripts.validate
+    scripts.verify_feature
+    scripts.pedagogical_lint
+    scripts.check_deps
+
+[importlinter:contract:layered_architecture]
+name = Enforce layered dependencies from CLI -> infrastructure -> domain
+type = layers
+layers =
+    scripts.validate
+    scripts.infrastructure
+    scripts.domain

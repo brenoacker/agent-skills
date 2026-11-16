@@ -1,0 +1,95 @@
+features:
+  validate-skills:
+    description: Validates all skills, YAML frontmatter, relative markdown links, plugin.json, and registry.json.
+    endpoint: scripts/validate.py
+    payload:
+      steps:
+        - args: ["{python}", "scripts/validate.py", "--root", "."]
+    assertions:
+      exit_code: 0
+      stdout_contains:
+        - "Validation PASSED"
+      expected_paths: []
+
+  install-antigravity:
+    description: Installs all curated and personal skills into an isolated Antigravity destination directory.
+    endpoint: scripts/install
+    payload:
+      steps:
+        - windows_args:
+            - powershell
+            - -ExecutionPolicy
+            - Bypass
+            - -File
+            - scripts/install.ps1
+            - -Target
+            - antigravity
+            - -Scope
+            - test
+            - -DestinationOverride
+            - "{temp_dir}"
+          posix_args:
+            - bash
+            - scripts/install.sh
+            - --target
+            - antigravity
+            - --scope
+            - test
+            - --dest
+            - "{temp_dir}"
+    assertions:
+      exit_code: 0
+      stdout_contains:
+        - "Skills installation completed successfully."
+      expected_paths:
+        - "software-factory/SKILL.md"
+        - "high-confidence-codebase/SKILL.md"
+
+  install-all-agents:
+    description: Installs all skills simultaneously for Antigravity, Claude Code, and Codex targets.
+    endpoint: scripts/install
+    payload:
+      steps:
+        - windows_args:
+            - powershell
+            - -ExecutionPolicy
+            - Bypass
+            - -File
+            - scripts/install.ps1
+            - -Target
+            - all
+            - -Scope
+            - test
+            - -DestinationOverride
+            - "{temp_dir}"
+          posix_args:
+            - bash
+            - scripts/install.sh
+            - --target
+            - all
+            - --scope
+            - test
+            - --dest
+            - "{temp_dir}"
+    assertions:
+      exit_code: 0
+      stdout_contains:
+        - "Skills installation completed successfully."
+      expected_paths:
+        - "antigravity/high-confidence-codebase/SKILL.md"
+        - "claude/high-confidence-codebase/SKILL.md"
+        - "codex/high-confidence-codebase/SKILL.md"
+
+  pedagogical-lint-and-deps:
+    description: Executes pedagogical LLM lint rules and architectural dependency graph checks across scripts and tests.
+    endpoint: scripts/pedagogical_lint.py + scripts/check_deps.py
+    payload:
+      steps:
+        - args: ["{python}", "scripts/pedagogical_lint.py"]
+        - args: ["{python}", "scripts/check_deps.py", "--root", "."]
+    assertions:
+      exit_code: 0
+      stdout_contains:
+        - "Pedagogical lint PASSED"
+        - "Dependency check PASSED"
+      expected_paths: []

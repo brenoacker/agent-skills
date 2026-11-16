@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import shutil
@@ -15,9 +17,10 @@ FIXTURES_DIR = SCRIPTS_DIR / "fixtures"
 
 
 class TestSoftwareFactory(unittest.TestCase):
+    """Integration tests covering the unified software-factory skill and orchestrator."""
 
-    def test_skill_directory_and_frontmatter(self):
-        """C1: skills/software-factory/SKILL.md declares frontmatter name: software-factory and skills/tlc-spec-lean/ is removed."""
+    def test_skill_directory_and_frontmatter(self) -> None:
+        """C1: software-factory SKILL.md declares valid frontmatter and legacy directory is gone."""
         legacy_dir = REPO_ROOT / "skills" / "tlc-spec-lean"
         self.assertFalse(legacy_dir.exists(), "Legacy skills/tlc-spec-lean/ directory must be removed")
 
@@ -28,8 +31,8 @@ class TestSoftwareFactory(unittest.TestCase):
         frontmatter = content.split("---", 2)[1]
         self.assertIn("name: software-factory", frontmatter)
 
-    def test_zero_legacy_branding_references(self):
-        """C2: Zero occurrences of prohibited legacy terms exist across skills/software-factory/, registry.json, plugin.json, and README.md."""
+    def test_zero_legacy_branding_references(self) -> None:
+        """C2: Zero occurrences of prohibited legacy terms exist across software-factory and manifests."""
         prohibited = (
             "tlc-spec-lean",
             "Tech Leads Club",
@@ -57,8 +60,8 @@ class TestSoftwareFactory(unittest.TestCase):
                     f"Prohibited legacy term '{term}' found in {path.relative_to(REPO_ROOT)}",
                 )
 
-    def test_repository_validator_passes_software_factory(self):
-        """C3: Running python scripts/validate.py --root . exits with code 0 and validates software-factory in skills/, registry.json, and plugin.json."""
+    def test_repository_validator_passes_software_factory(self) -> None:
+        """C3: validate.py passes and manifests register software-factory."""
         validate_script = REPO_ROOT / "scripts" / "validate.py"
         res = subprocess.run(
             [sys.executable, str(validate_script), "--root", str(REPO_ROOT)],
@@ -77,8 +80,8 @@ class TestSoftwareFactory(unittest.TestCase):
         prompts_blob = " ".join(plugin.get("suggestedPrompts", []))
         self.assertIn("software-factory", prompts_blob)
 
-    def test_discovery_reference_completeness(self):
-        """C4: skills/software-factory/references/discovery.md defines Scout handoff, 5-stage flow, Observable surfaces, and 9 implicit dimensions."""
+    def test_discovery_reference_completeness(self) -> None:
+        """C4: discovery.md defines Scout handoff, 5-stage flow, Observable surfaces, and 9 dimensions."""
         discovery_md = REFS_DIR / "discovery.md"
         self.assertTrue(discovery_md.is_file(), "references/discovery.md must exist")
         text = discovery_md.read_text(encoding="utf-8")
@@ -102,8 +105,8 @@ class TestSoftwareFactory(unittest.TestCase):
         for dim in dimensions:
             self.assertIn(dim, text.lower(), f"discovery.md must cover implicit dimension '{dim}'")
 
-    def test_validate_plan_rejects_unconfirmed_assumption(self):
-        """C5: validate_plan.py exits with code 1 and reports an unconfirmed assumption error when Confirmed? is n or blank."""
+    def test_validate_plan_rejects_unconfirmed_assumption(self) -> None:
+        """C5: validate_plan.py exits 1 when Confirmed? is n or blank."""
         validate_plan = SCRIPTS_DIR / "validate_plan.py"
         fixture_plan = (FIXTURES_DIR / "plan.md").read_text(encoding="utf-8")
 
@@ -122,11 +125,15 @@ class TestSoftwareFactory(unittest.TestCase):
                     capture_output=True,
                     text=True,
                 )
-                self.assertEqual(res.returncode, 1, f"Expected exit 1 for Confirmed?='{bad_val}', got {res.returncode}")
+                self.assertEqual(
+                    res.returncode,
+                    1,
+                    f"Expected exit 1 for Confirmed?='{bad_val}', got {res.returncode}",
+                )
                 self.assertIn("unconfirmed", (res.stdout + res.stderr).lower())
 
-    def test_validate_plan_accepts_confirmed_assumptions(self):
-        """C6: validate_plan.py exits with code 0 when all assumption rows have Confirmed? set to y and structural checks pass."""
+    def test_validate_plan_accepts_confirmed_assumptions(self) -> None:
+        """C6: validate_plan.py exits 0 when all assumptions are confirmed and structure passes."""
         validate_plan = SCRIPTS_DIR / "validate_plan.py"
         with tempfile.TemporaryDirectory() as tmp:
             fdir = Path(tmp) / ".specs" / "features" / "billing"
@@ -137,11 +144,15 @@ class TestSoftwareFactory(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
-            self.assertEqual(res.returncode, 0, f"Expected exit 0, got {res.returncode}: {res.stdout}\n{res.stderr}")
+            self.assertEqual(
+                res.returncode,
+                0,
+                f"Expected exit 0, got {res.returncode}: {res.stdout}\n{res.stderr}",
+            )
             self.assertIn("0 error(s)", res.stdout)
 
-    def test_orchestration_reference_completeness(self):
-        """C7: references/orchestration.md defines Thin-Orchestrator rules, context-window budget rules, autonomous post-plan loop, and native dispatch mappings for antigravity, claude, and codex across all 6 roles."""
+    def test_orchestration_reference_completeness(self) -> None:
+        """C7: orchestration.md defines Thin-Orchestrator rules, budgets, loop, and dispatch mappings."""
         orch_md = REFS_DIR / "orchestration.md"
         self.assertTrue(orch_md.is_file(), "references/orchestration.md must exist")
         text = orch_md.read_text(encoding="utf-8")
@@ -157,8 +168,8 @@ class TestSoftwareFactory(unittest.TestCase):
         for agent in ("antigravity", "claude", "codex"):
             self.assertIn(agent, low, f"orchestration.md must define dispatch mapping for '{agent}'")
 
-    def test_orchestrate_status_phases(self):
-        """C8: orchestrate.py status <feature> --root <dir> outputs current pipeline phase (discover, plan, checks, build, verify, fix, done) and next recommended role, exiting 0."""
+    def test_orchestrate_status_phases(self) -> None:
+        """C8: orchestrate.py status outputs each pipeline phase and next recommended role."""
         orchestrate = SCRIPTS_DIR / "orchestrate.py"
         fixture_plan = (FIXTURES_DIR / "plan.md").read_text(encoding="utf-8")
         fixture_checks = (FIXTURES_DIR / "checks.md").read_text(encoding="utf-8")
@@ -167,7 +178,6 @@ class TestSoftwareFactory(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             fdir = Path(tmp) / ".specs" / "features" / "billing"
 
-            # 1. discover: feature dir missing or no plan.md yet
             res = subprocess.run(
                 [sys.executable, str(orchestrate), "status", "billing", "--root", tmp],
                 capture_output=True,
@@ -177,7 +187,6 @@ class TestSoftwareFactory(unittest.TestCase):
             self.assertIn("Phase: discover", res.stdout)
             self.assertIn("Next role: scout", res.stdout)
 
-            # 2. plan: plan.md exists but has an unconfirmed assumption (invalid plan)
             fdir.mkdir(parents=True)
             unconfirmed_plan = fixture_plan.replace(
                 "| the provider already retried 3 times before it reports a failure | y |",
@@ -194,7 +203,6 @@ class TestSoftwareFactory(unittest.TestCase):
             self.assertIn("Phase: plan", res.stdout)
             self.assertIn("Next role: planner", res.stdout)
 
-            # 3. checks: valid plan.md, no checks.md yet
             (fdir / "plan.md").write_text(fixture_plan, encoding="utf-8")
             res = subprocess.run(
                 [sys.executable, str(orchestrate), "status", "billing", "--root", tmp],
@@ -205,7 +213,6 @@ class TestSoftwareFactory(unittest.TestCase):
             self.assertIn("Phase: checks", res.stdout)
             self.assertIn("Next role: specifier", res.stdout)
 
-            # 4. build: valid plan.md and valid checks.md, no Boundary closed yet and no verification.md
             (fdir / "checks.md").write_text(fixture_checks, encoding="utf-8")
             res = subprocess.run(
                 [sys.executable, str(orchestrate), "status", "billing", "--root", tmp],
@@ -216,7 +223,6 @@ class TestSoftwareFactory(unittest.TestCase):
             self.assertIn("Phase: build", res.stdout)
             self.assertIn("Next role: builder", res.stdout)
 
-            # 5. verify: checks.md records Boundary closed (all checks built), no verification.md yet
             built_checks = fixture_checks + "\n- **Boundary:** C1-C11 closed at `a1b2c3d`\n"
             (fdir / "checks.md").write_text(built_checks, encoding="utf-8")
             res = subprocess.run(
@@ -228,7 +234,6 @@ class TestSoftwareFactory(unittest.TestCase):
             self.assertIn("Phase: verify", res.stdout)
             self.assertIn("Next role: verifier", res.stdout)
 
-            # 6. fix: verification.md exists with Verdict: FAIL
             fail_verif = fixture_verif.replace("**Verdict**: PASS", "**Verdict**: FAIL")
             (fdir / "verification.md").write_text(fail_verif, encoding="utf-8")
             res = subprocess.run(
@@ -240,7 +245,6 @@ class TestSoftwareFactory(unittest.TestCase):
             self.assertIn("Phase: fix", res.stdout)
             self.assertIn("Next role: fixer", res.stdout)
 
-            # 7. done: verification.md exists and passes validate_verification.py
             (fdir / "verification.md").write_text(fixture_verif, encoding="utf-8")
             res = subprocess.run(
                 [sys.executable, str(orchestrate), "status", "billing", "--root", tmp],
@@ -251,8 +255,8 @@ class TestSoftwareFactory(unittest.TestCase):
             self.assertIn("Phase: done", res.stdout)
             self.assertIn("Next role: none", res.stdout)
 
-    def test_orchestrate_prompt_all_roles(self):
-        """C9: orchestrate.py prompt <feature> --role <role> --root <dir> generates a self-contained, context-isolated prompt for all 6 roles and exits 0."""
+    def test_orchestrate_prompt_all_roles(self) -> None:
+        """C9: orchestrate.py prompt generates an isolated prompt for all 6 roles and exits 0."""
         orchestrate = SCRIPTS_DIR / "orchestrate.py"
         roles = ("scout", "planner", "specifier", "builder", "verifier", "fixer")
 
@@ -272,12 +276,11 @@ class TestSoftwareFactory(unittest.TestCase):
                 self.assertIn(role.upper(), res.stdout.upper())
                 self.assertIn(".specs/features/billing", res.stdout.replace("\\", "/"))
 
-    def test_orchestrate_gate_phases(self):
-        """C10: orchestrate.py gate <feature> --phase <plan|checks|verify> --root <dir> runs corresponding validator and propagates exit codes 0, 1, and 2."""
+    def test_orchestrate_gate_phases(self) -> None:
+        """C10: orchestrate.py gate runs each phase validator and propagates exit codes 0, 1, and 2."""
         orchestrate = SCRIPTS_DIR / "orchestrate.py"
 
         with tempfile.TemporaryDirectory() as tmp:
-            # Missing feature -> exit 2 for all 3 phases
             for phase in ("plan", "checks", "verify"):
                 res = subprocess.run(
                     [sys.executable, str(orchestrate), "gate", "missing-feat", "--phase", phase, "--root", tmp],
@@ -286,7 +289,6 @@ class TestSoftwareFactory(unittest.TestCase):
                 )
                 self.assertEqual(res.returncode, 2, f"Expected exit 2 on missing feature for phase {phase}")
 
-            # Valid fixtures -> exit 0 for all 3 phases
             fdir = Path(tmp) / ".specs" / "features" / "billing"
             fdir.mkdir(parents=True)
             for name in ("plan.md", "checks.md", "verification.md"):
@@ -298,9 +300,12 @@ class TestSoftwareFactory(unittest.TestCase):
                     capture_output=True,
                     text=True,
                 )
-                self.assertEqual(res.returncode, 0, f"Expected exit 0 on valid fixture for phase {phase}: {res.stdout}\n{res.stderr}")
+                self.assertEqual(
+                    res.returncode,
+                    0,
+                    f"Expected exit 0 on valid fixture for phase {phase}: {res.stdout}\n{res.stderr}",
+                )
 
-            # Broken artifacts -> exit 1 for all 3 phases
             (fdir / "plan.md").write_text("# Broken Plan\n", encoding="utf-8")
             (fdir / "checks.md").write_text("# Broken Checks\n", encoding="utf-8")
             (fdir / "verification.md").write_text("# Broken Verification\n**Verdict**: FAIL\n", encoding="utf-8")
@@ -313,8 +318,8 @@ class TestSoftwareFactory(unittest.TestCase):
                 )
                 self.assertEqual(res.returncode, 1, f"Expected exit 1 on invalid artifact for phase {phase}")
 
-    def test_orchestrate_dispatch_dry_run_agents(self):
-        """C11: orchestrate.py dispatch <feature> --role <role> --dry-run --agent <antigravity|claude|codex> prints CLI command and isolated prompt and exits 0."""
+    def test_orchestrate_dispatch_dry_run_agents(self) -> None:
+        """C11: orchestrate.py dispatch prints CLI command and isolated prompt for all agents and roles."""
         orchestrate = SCRIPTS_DIR / "orchestrate.py"
         roles = ("scout", "planner", "specifier", "builder", "verifier", "fixer")
         agents = (
@@ -353,8 +358,8 @@ class TestSoftwareFactory(unittest.TestCase):
                     self.assertIn(role, res.stdout.lower())
                     self.assertIn(expected_token.lower(), res.stdout.lower())
 
-    def test_selftest_script_passes(self):
-        """C12: Running skills/software-factory/scripts/selftest.py executes all checks and exits with code 0."""
+    def test_selftest_script_passes(self) -> None:
+        """C12: Running skills/software-factory/scripts/selftest.py executes all checks and exits 0."""
         selftest = SCRIPTS_DIR / "selftest.py"
         self.assertTrue(selftest.is_file(), "skills/software-factory/scripts/selftest.py must exist")
         res = subprocess.run(
